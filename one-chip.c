@@ -26,9 +26,9 @@ unsigned int icount;
 unsigned char inbuf[3] = {0};
 unsigned char uart_fin = 0;
 unsigned char panduan;
-unsigned char posit; //½«À´ÒªÈ¥µÄÎ»ÖÃ
-unsigned char preposit;//ÎÒÏÖÔÚµÄÎ»ÖÃ
-unsigned char cw;  //¿ØÖÆÕý×ª·´×ª
+unsigned char posit; 
+unsigned char preposit;
+unsigned char cw;  
 
 
 //-----------------------------------------------------------------------------
@@ -54,7 +54,7 @@ void delay(unsigned int N)
 	}
 }
 
-void serial()interrupt 4   //½ÓÊÕÎª¶à¸ö×Ö·û
+void serial()interrupt 4   //receive multi-char
 {	
 	static unsigned int count = 0; 
 	if(RI0==1)
@@ -73,7 +73,7 @@ void serial()interrupt 4   //½ÓÊÕÎª¶à¸ö×Ö·û
 	}
 }
 
-void transmitchar(unsigned char dat)	  //µ¥¸ö×Ö·û·¢ËÍ
+void transmitchar(unsigned char dat)	  //receive single char
 {
 	SBUF0 = dat;
 	while(!TI0);
@@ -86,7 +86,7 @@ void main (void)
 	unsigned char preposit ='1';
 	PCA0MD &= ~0x40;                    // WDTE = 0 (clear watchdog timer
 
-	Ext_Interrupt_Init ();			    //ÏÈºóË³ÐòºÜÖØÒª										// enable)
+	Ext_Interrupt_Init ();	         // enable
 	Timer0_Init ();    
 	PORT_Init();                        // Initialize Port I/O
 	SYSCLK_Init ();                     // Initialize Oscillator
@@ -103,7 +103,7 @@ void main (void)
 			unsigned int i=0;
 			if(uart_fin == 1)
 			{	
-				if(panduan=='a')//×Ô¶¯¸´Î»	¹¦ÄÜ1
+				if(panduan=='a')//func1 :auto init	
 				{	
 					flag = 0;
 					P14	= 0;
@@ -115,10 +115,10 @@ void main (void)
 						while(icount);
 						P13 = ~P13;						
 					}
-					preposit ='1';	//Ã¿»Ø¸´Î»Ö®ºó¶¼ÒªÖØ¶¨ÒåÒ»ÏÂµ±Ç°Î»ÖÃÎª1						
+					preposit ='1';						
 				}
 
-				if(panduan=='c')//×Ô¶¯Ðý×ªÕÕÏà	 ¹¦ÄÜ2
+				if(panduan=='c')//fun2 : auto rotate and take photo 
 				{
 					flag = 0;
 					jishu = 0;
@@ -151,17 +151,16 @@ void main (void)
 					/////////////
 
 					RSTSRC &=~0xEF;
-					preposit ='1';	//Ã¿»Ø¸´Î»Ö®ºó¶¼ÒªÖØ¶¨ÒåÒ»ÏÂµ±Ç°Î»ÖÃÎª1	
+					preposit ='1';	
 				}
 
-				if(panduan=='f') //»ñÈ¡4¸öÎ»ÖÃ	  ¹¦ÄÜ3
+				if(panduan=='f') //func3 :get 4 posit
 				{				
-					if(cw=='1')		//cw=1ÎªÕý×ª  ÄæÊ±Õë
+					if(cw=='1')		//cw=1 anti-clockwise
 					{
 						P14	= 0;
 						P14 = ~P14;				 
-					    //ÕâÀïËãÓÐ¹Ø6375µÄ±¶ÊýÎÊÌâ£¬ÕâÑù¾ÍÄÜ¿ØÖÆËü×ßµÄ¾àÀë
-						//positÎªÏëÈ¥µÄÎ»ÖÃ£¬prepositÎªµ±Ç°Î»ÖÃ
+					 
 						if(posit>preposit)
 						{
 							jishu = (posit-preposit)*6375;
@@ -171,7 +170,7 @@ void main (void)
 							jishu = (posit+4-preposit)*6375;
 						}
 					}						
-					else		  //cw=0Îª·´×ª Ë³Ê±Õë
+					else		  //cw=0 clockwise
 					{					
 						P14 = 0;	
 						if(preposit>posit)
@@ -184,9 +183,9 @@ void main (void)
 						}
 					}
 				
-					while(i<=jishu)	  //6375µÄ±¶Êý
+					while(i<=jishu)	  
 					{
-						icount = 150;	 //Âö³å
+						icount = 150;	 
 						ET0 = 1;   
 						while(icount);
 						P13 = ~P13;	
@@ -267,13 +266,13 @@ void UART0_Init (void)
                                        //        RX enabled
                                        //        ninth bits are zeros
                                        //        clear RI0 and TI0 bits
-   if (SYSTEMCLOCK/BAUDRATE/2/256 < 1) //¶¨Ê±Æ÷1Ê±ÖÓÔ´²»·ÖÆµÊ±µÄ×îÐ¡Òç³öÆµÂÊµÄ1/2Ð¡ÓÚ²¨ÌØÂÊ
+   if (SYSTEMCLOCK/BAUDRATE/2/256 < 1) //å®šæ—¶å™¨1æ—¶é’Ÿæºä¸åˆ†é¢‘æ—¶çš„æœ€å°æº¢å‡ºé¢‘çŽ‡çš„1/2å°äºŽæ³¢ç‰¹çŽ‡
 	{
 		TH1 = -(SYSTEMCLOCK/BAUDRATE/2);
 		CKCON &= ~0x0B;                  // T1M = 1; SCA1:0 = xx
 		CKCON |=  0x08;
 	}
-	else if (SYSTEMCLOCK/BAUDRATE/2/256 < 4) //Ê±ÖÓÔ´4·ÖÆµÊ±µÄ×îÐ¡Òç³öÆµÂÊµÄ1/2Ð¡ÓÚ²¨ÌØÂÊ
+	else if (SYSTEMCLOCK/BAUDRATE/2/256 < 4) //æ—¶é’Ÿæº4åˆ†é¢‘æ—¶çš„æœ€å°æº¢å‡ºé¢‘çŽ‡çš„1/2å°äºŽæ³¢ç‰¹çŽ‡
 	{
 		TH1 = -(SYSTEMCLOCK/BAUDRATE/2/4);
 		CKCON &= ~0x0B;                  // T1M = 0; SCA1:0 = 01		
@@ -305,7 +304,7 @@ void Timer0_Init(void)
 void Timer0_ISR (void) interrupt 1
 {
 
-	TH0 = (65536-10)/256; 			//¶¨Ê±1msÖÐ¶Ï
+	TH0 = (65536-10)/256; 			//å®šæ—¶1msä¸­æ–­
 	TL0 = (65536-10)%256;
 	if(icount)
 	{	
@@ -325,7 +324,7 @@ void Ext_Interrupt_Init (void)
 	IT0 = 1; 
 	EX0 = 1;                            // Enable /INT0 interrupts
 }
-void INT0_ISR (void) interrupt 0	   //Íâ²¿ÖÐ¶Ï
+void INT0_ISR (void) interrupt 0	   //å¤–éƒ¨ä¸­æ–­
 {
 	flag = 1;
 }	
